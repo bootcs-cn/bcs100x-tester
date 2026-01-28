@@ -1,0 +1,107 @@
+package stages
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/bootcs-dev/tester-utils/runner"
+	"github.com/bootcs-dev/tester-utils/test_case_harness"
+	"github.com/bootcs-dev/tester-utils/tester_definition"
+)
+
+func sentimentalReadabilityTestCase() tester_definition.TestCase {
+	return tester_definition.TestCase{
+		Slug:     "sentimental-readability",
+		Timeout:  30 * time.Second,
+		TestFunc: testSentimentalReadability,
+	}
+}
+
+func testSentimentalReadability(harness *test_case_harness.TestCaseHarness) error {
+	logger := harness.Logger
+	workDir := harness.SubmissionDir
+
+	// 1. 检查 readability.py 文件存在
+	logger.Infof("Checking readability.py exists...")
+	if !harness.FileExists("readability.py") {
+		return fmt.Errorf("readability.py does not exist")
+	}
+	logger.Successf("readability.py exists")
+
+	// 2. 测试用例 (对齐 CS50 check50)
+	tests := []struct {
+		input    string
+		expected string
+		name     string
+	}{
+		{
+			"In my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.",
+			"Grade 7",
+			"handles single sentence with multiple words",
+		},
+		{
+			"There are more things in Heaven and Earth, Horatio, than are dreamt of in your philosophy.",
+			"Grade 9",
+			"handles punctuation within a single sentence",
+		},
+		{
+			`Alice was beginning to get very tired of sitting by her sister on the bank, and of having nothing to do: once or twice she had peeped into the book her sister was reading, but it had no pictures or conversations in it, "and what is the use of a book," thought Alice "without pictures or conversation?"`,
+			"Grade 8",
+			"handles more complex single sentence",
+		},
+		{
+			"Harry Potter was a highly unusual boy in many ways. For one thing, he hated the summer holidays more than any other time of year. For another, he really wanted to do his homework, but was forced to do it in secret, in the dead of the night. And he also happened to be a wizard.",
+			"Grade 5",
+			"handles multiple sentences",
+		},
+		{
+			"It was a bright cold day in April, and the clocks were striking thirteen. Winston Smith, his chin nuzzled into his breast in an effort to escape the vile wind, slipped quickly through the glass doors of Victory Mansions, though not quickly enough to prevent a swirl of gritty dust from entering along with him.",
+			"Grade 10",
+			"handles multiple more complex sentences",
+		},
+		{
+			"When he was nearly thirteen, my brother Jem got his arm badly broken at the elbow. When it healed, and Jem's fears of never being able to play football were assuaged, he was seldom self-conscious about his injury. His left arm was somewhat shorter than his right; when he stood or walked, the back of his hand was at right angles to his body, his thumb parallel to his thigh.",
+			"Grade 8",
+			"handles longer passages",
+		},
+		{
+			"Congratulations! Today is your day. You're off to Great Places! You're off and away!",
+			"Grade 3",
+			"handles multiple sentences with different punctuation",
+		},
+		{
+			"Would you like them here or there? I would not like them here or there. I would not like them anywhere.",
+			"Grade 2",
+			"handles questions in passage",
+		},
+		{
+			"One fish. Two fish. Red fish. Blue fish.",
+			"Before Grade 1",
+			"handles reading level before Grade 1",
+		},
+		{
+			"A large class of computational problems involve the determination of properties of graphs, digraphs, integers, arrays of integers, finite families of finite sets, boolean formulas and elements of other countable domains.",
+			"Grade 16+",
+			"handles reading level at Grade 16+",
+		},
+	}
+
+	for _, tc := range tests {
+		logger.Infof("Testing %s...", tc.name)
+
+		r := runner.Run(workDir, "python3", "readability.py").
+			WithTimeout(5 * time.Second).
+			Stdin(tc.input).
+			Stdout(tc.expected).
+			Exit(0)
+
+		if err := r.Error(); err != nil {
+			return fmt.Errorf("%s: %v", tc.name, err)
+		}
+
+		logger.Successf("✓ %s", tc.name)
+	}
+
+	logger.Successf("All tests passed!")
+	return nil
+}

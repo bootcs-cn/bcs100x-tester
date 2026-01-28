@@ -31,6 +31,19 @@ STAGES=(
     "filter-less"
     "filter-more"
     "recover"
+    "inheritance"
+    "speller"
+    "sentimental-hello"
+    "sentimental-mario-less"
+    "sentimental-mario-more"
+    "sentimental-cash"
+    "sentimental-credit"
+    "sentimental-readability"
+    "dna"
+    "songs"
+    "movies"
+    "fiftyville"
+    "finance"
 )
 
 PASSED=0

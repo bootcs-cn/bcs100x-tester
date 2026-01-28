@@ -7,40 +7,31 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bootcs-dev/bcs100x-tester/internal/helpers"
 	"github.com/bootcs-dev/tester-utils/runner"
 	"github.com/bootcs-dev/tester-utils/test_case_harness"
 	"github.com/bootcs-dev/tester-utils/tester_definition"
 )
 
-func marioLessTestCase() tester_definition.TestCase {
+func sentimentalMarioLessTestCase() tester_definition.TestCase {
 	return tester_definition.TestCase{
-		Slug:     "mario-less",
+		Slug:     "sentimental-mario-less",
 		Timeout:  30 * time.Second,
-		TestFunc: testMarioLess,
+		TestFunc: testSentimentalMarioLess,
 	}
 }
 
-func testMarioLess(harness *test_case_harness.TestCaseHarness) error {
+func testSentimentalMarioLess(harness *test_case_harness.TestCaseHarness) error {
 	logger := harness.Logger
 	workDir := harness.SubmissionDir
 
-	// 1. 检查 mario.c 文件存在
-	logger.Infof("Checking mario.c exists...")
-	if !harness.FileExists("mario.c") {
-		return fmt.Errorf("mario.c does not exist")
+	// 1. 检查 mario.py 文件存在
+	logger.Infof("Checking mario.py exists...")
+	if !harness.FileExists("mario.py") {
+		return fmt.Errorf("mario.py does not exist")
 	}
-	logger.Successf("mario.c exists")
+	logger.Successf("mario.py exists")
 
-	// 2. 编译 mario.c
-	logger.Infof("Compiling mario.c...")
-	if err := helpers.CompileC(workDir, "mario.c", "mario", true); err != nil {
-		return fmt.Errorf("mario.c does not compile: %v", err)
-	}
-	logger.Successf("mario.c compiles")
-
-	// 3. 测试拒绝无效输入 (对齐 CS50 check50)
-	// 使用交互模式: Start() -> SendLine() -> Reject()
+	// 2. 测试拒绝无效输入 (对齐 CS50 check50)
 	rejectTests := []struct {
 		input string
 		name  string
@@ -54,8 +45,7 @@ func testMarioLess(harness *test_case_harness.TestCaseHarness) error {
 	for _, tc := range rejectTests {
 		logger.Infof("Testing %s...", tc.name)
 
-		// 使用交互模式: 启动程序 -> 发送输入 -> 检查拒绝（程序还在运行）
-		r := runner.Run(workDir, "mario").
+		r := runner.Run(workDir, "python3", "mario.py").
 			WithTimeout(5 * time.Second).
 			WithPty().
 			Start().
@@ -71,7 +61,7 @@ func testMarioLess(harness *test_case_harness.TestCaseHarness) error {
 		logger.Successf("✓ %s", tc.name)
 	}
 
-	// 4. 测试有效输入（使用 txt 文件作为期望输出，对齐 CS50）
+	// 3. 测试有效输入（使用 txt 文件作为期望输出，对齐 CS50）
 	validTests := []struct {
 		height  string
 		txtFile string
@@ -92,7 +82,7 @@ func testMarioLess(harness *test_case_harness.TestCaseHarness) error {
 		}
 		expected := strings.TrimSpace(string(expectedBytes))
 
-		r := runner.Run(workDir, "mario").
+		r := runner.Run(workDir, "python3", "mario.py").
 			WithTimeout(5 * time.Second).
 			Stdin(tc.height).
 			Stdout(expected).
@@ -105,25 +95,31 @@ func testMarioLess(harness *test_case_harness.TestCaseHarness) error {
 		logger.Successf("✓ %s", tc.name)
 	}
 
-	// 5. 测试拒绝后接受 (CS50 特有测试)
-	logger.Infof("Testing rejects -1, then accepts 2...")
+	// 4. 测试拒绝后接受 (CS50 特有测试: rejects 9, then accepts 2)
+	logger.Infof("Testing rejects 9 and then accepts 2...")
 	expectedBytes, err := os.ReadFile(filepath.Join(workDir, "2.txt"))
 	if err != nil {
 		return fmt.Errorf("failed to read 2.txt: %v", err)
 	}
 	expected := strings.TrimSpace(string(expectedBytes))
 
-	r := runner.Run(workDir, "mario").
+	r := runner.Run(workDir, "python3", "mario.py").
 		WithTimeout(5 * time.Second).
-		Stdin("-1\n2\n").
+		WithPty().
+		Start().
+		SendLine("9").
+		Reject(200 * time.Millisecond).
+		SendLine("2").
+		WaitForExit().
 		Stdout(expected).
 		Exit(0)
 
 	if err := r.Error(); err != nil {
-		return fmt.Errorf("rejects -1 then accepts 2: %v", err)
+		return fmt.Errorf("rejects 9 and then accepts 2: %v", err)
 	}
-	logger.Successf("✓ rejects -1, then accepts 2")
 
-	logger.Successf("All mario-less tests passed!")
+	logger.Successf("✓ rejects 9 and then accepts 2")
+
+	logger.Successf("All tests passed!")
 	return nil
 }

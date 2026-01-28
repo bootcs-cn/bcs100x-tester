@@ -32,6 +32,27 @@ func GetDefinition() tester_definition.TesterDefinition {
 			filterLessTestCase(),
 			filterMoreTestCase(),
 			recoverTestCase(),
+
+			// Week 5: Data Structures
+			inheritanceTestCase(),
+			spellerTestCase(),
+
+			// Week 6: Python
+			sentimentalHelloTestCase(),
+			sentimentalMarioLessTestCase(),
+			sentimentalMarioMoreTestCase(),
+			sentimentalCashTestCase(),
+			sentimentalCreditTestCase(),
+			sentimentalReadabilityTestCase(),
+			dnaTestCase(),
+
+			// Week 7: SQL
+			songsTestCase(),
+			moviesTestCase(),
+			fiftyvilleTestCase(),
+
+			// Week 9: Flask
+			financeTestCase(),
 		},
 	}
 }

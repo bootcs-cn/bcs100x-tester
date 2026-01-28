@@ -2,6 +2,9 @@ package stages
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/bootcs-dev/bcs100x-tester/internal/helpers"
@@ -68,25 +71,30 @@ func testMarioMore(harness *test_case_harness.TestCaseHarness) error {
 		logger.Successf("✓ %s", tc.name)
 	}
 
-	// 4. 测试有效输入
+	// 4. 测试有效输入（使用 txt 文件作为期望输出，对齐 CS50）
 	validTests := []struct {
-		height int
-		name   string
+		height  string
+		txtFile string
+		name    string
 	}{
-		{1, "handles a height of 1 correctly"},
-		{2, "handles a height of 2 correctly"},
-		{8, "handles a height of 8 correctly"},
+		{"1", "1.txt", "handles a height of 1 correctly"},
+		{"2", "2.txt", "handles a height of 2 correctly"},
+		{"8", "8.txt", "handles a height of 8 correctly"},
 	}
 
 	for _, tc := range validTests {
 		logger.Infof("Testing %s...", tc.name)
 
-		expected := helpers.GenerateDoublePyramid(tc.height)
-		input := fmt.Sprintf("%d", tc.height)
+		// 读取期望输出文件
+		expectedBytes, err := os.ReadFile(filepath.Join(workDir, tc.txtFile))
+		if err != nil {
+			return fmt.Errorf("failed to read %s: %v", tc.txtFile, err)
+		}
+		expected := strings.TrimSpace(string(expectedBytes))
 
 		r := runner.Run(workDir, "mario").
 			WithTimeout(5 * time.Second).
-			Stdin(input).
+			Stdin(tc.height).
 			Stdout(expected).
 			Exit(0)
 
@@ -99,7 +107,12 @@ func testMarioMore(harness *test_case_harness.TestCaseHarness) error {
 
 	// 5. 测试拒绝后接受 (CS50 特有测试)
 	logger.Infof("Testing rejects -1, then accepts 2...")
-	expected := helpers.GenerateDoublePyramid(2)
+	expectedBytes, err := os.ReadFile(filepath.Join(workDir, "2.txt"))
+	if err != nil {
+		return fmt.Errorf("failed to read 2.txt: %v", err)
+	}
+	expected := strings.TrimSpace(string(expectedBytes))
+
 	r := runner.Run(workDir, "mario").
 		WithTimeout(5 * time.Second).
 		Stdin("-1\n2\n").
