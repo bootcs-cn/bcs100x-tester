@@ -1,24 +1,22 @@
 # Docker Build Context Setup
 #
-# This Dockerfile expects to be built from the parent directory (bootcs-courses)
-# to have access to both bcs100x-tester and bootcs-tester-utils
-
-# Build command:
-#   docker build -f bcs100x-tester/Dockerfile -t bootcs/bcs100x-tester .
+# This Dockerfile builds bcs100x-tester using the published tester-utils from GitHub
+# Build from the bootcs-courses directory:
+#   cd /path/to/bootcs-courses
+#   docker build -f bcs100x-tester/Dockerfile.multi-context -t bootcs/bcs100x-tester .
 
 # Stage 1: Build the Go binary
 FROM golang:1.24-bookworm AS builder
 
 WORKDIR /workspace
 
-# Copy both projects
+# Copy the tester project
 COPY bcs100x-tester /workspace/bcs100x-tester
-COPY bootcs-tester-utils /workspace/bootcs-tester-utils
 
 # Set working directory to the tester
 WORKDIR /workspace/bcs100x-tester
 
-# Download dependencies (the replace directive in go.mod points to ../bootcs-tester-utils)
+# Download dependencies from GitHub (uses tester-utils v1.0.0)
 RUN go mod download
 
 # Build the binary with CGO enabled (required for SQLite)
