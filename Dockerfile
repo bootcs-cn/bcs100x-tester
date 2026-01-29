@@ -1,20 +1,17 @@
 # Docker Build Context Setup
 #
 # This Dockerfile builds bcs100x-tester using the published tester-utils from GitHub
-# Build from the bootcs-courses directory:
-#   cd /path/to/bootcs-courses
-#   docker build -f bcs100x-tester/Dockerfile -t bootcs/bcs100x-tester .
+# Build from the bcs100x-tester directory:
+#   cd bcs100x-tester
+#   docker build -t bootcs/bcs100x-tester .
 
 # Stage 1: Build the Go binary
 FROM golang:1.24-bookworm AS builder
 
-WORKDIR /workspace
+WORKDIR /app
 
-# Copy the tester project
-COPY bcs100x-tester /workspace/bcs100x-tester
-
-# Set working directory to the tester
-WORKDIR /workspace/bcs100x-tester
+# Copy the tester project (build context is bcs100x-tester directory)
+COPY . .
 
 # Download dependencies from GitHub (uses tester-utils v1.0.0)
 RUN go mod download
@@ -51,19 +48,13 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -s /bin/bash tester
 
 # Copy the binary from builder
-COPY --from=builder /workspace/bcs100x-tester/bcs100x-tester /usr/local/bin/bcs100x-tester
+COPY --from=builder /app/bcs100x-tester /usr/local/bin/bcs100x-tester
 
 # Set working directory
 WORKDIR /workspace
 
-# Change ownership to tester user
-RUN chown -R tester:tester /workspace
-
 # Switch to non-root user
 USER tester
-
-# Set environment variables
-ENV PATH="/usr/local/bin:${PATH}"
 
 # Default command shows help
 ENTRYPOINT ["bcs100x-tester"]
