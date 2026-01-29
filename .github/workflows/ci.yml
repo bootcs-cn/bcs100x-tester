@@ -99,18 +99,65 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          platforms: linux/amd64
+          push: false
+          load: true
+          tags: bootcs/bcs100x-tester:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Checkout solution repository
+        if: github.event_name != 'pull_request'
+        uses: actions/checkout@v4
+        with:
+          repository: bootcs-cn/bcs100x-solution
+          token: ${{ secrets.SOLUTION_REPO_PAT }}
+          path: solution
+
+      - name: Run regression tests
+        if: github.event_name != 'pull_request'
+        run: |
+          cd solution
+          STAGES=(
+            hello mario-less mario-more cash credit readability
+            caesar substitution scrabble plurality runoff tideman
+            inheritance filter-less filter-more recover volume
+            sort songs movies fiftyville speller
+            sentimental-hello sentimental-mario-less sentimental-mario-more
+            sentimental-cash sentimental-credit sentimental-readability
+            dna finance
+          )
+          
+          FAILED=()
+          for stage in "${STAGES[@]}"; do
+            echo "Testing $stage..."
+            if docker run --rm --user $(id -u):$(id -g) -v "$(pwd):/workspace" bootcs/bcs100x-tester:test \
+              -s "$stage" -d "/workspace/$stage"; then
+              echo "✓ $stage passed"
+            else
+              echo "✗ $stage failed"
+              FAILED+=("$stage")
+            fi
+          done
+          
+          if [ ${#FAILED[@]} -gt 0 ]; then
+            echo ""
+            echo "Failed stages: ${FAILED[*]}"
+            exit 1
+          fi
+          
+          echo ""
+          echo "All ${#STAGES[@]} tests passed!"
+
+      - name: Build and push multi-platform image
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Trigger solution tests
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          curl -X POST \
-            -H "Authorization: token ${{ secrets.SOLUTION_REPO_PAT }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/bootcs-cn/bcs100x-solution/dispatches \
-            -d '{"event_type":"tester-updated"}'
