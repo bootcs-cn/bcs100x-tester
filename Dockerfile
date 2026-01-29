@@ -10,11 +10,14 @@ FROM golang:1.24-bookworm AS builder
 
 WORKDIR /app
 
-# Copy the tester project (build context is bcs100x-tester directory)
-COPY . .
+# Copy go module files first for better caching
+COPY go.mod go.sum ./
 
 # Download dependencies from GitHub (uses tester-utils v1.0.0)
 RUN go mod download
+
+# Copy the rest of the project
+COPY . .
 
 # Build the binary with CGO enabled (required for SQLite)
 RUN CGO_ENABLED=1 GOOS=linux go build \

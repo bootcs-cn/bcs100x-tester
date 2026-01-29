@@ -9,9 +9,6 @@ bcs100x-tester
 *.out
 *.exe
 
-# Go module cache
-go.sum
-
 # IDE files
 .vscode/
 .idea/
