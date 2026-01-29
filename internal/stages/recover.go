@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/bootcs-dev/tester-utils/test_case_harness"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/test_case_harness"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 )
 
 // Expected SHA256 hashes for recovered JPEGs (from CS50 check50)

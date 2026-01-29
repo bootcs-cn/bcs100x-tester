@@ -16,8 +16,19 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bootcs-dev/tester-utils/test_case_harness"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/tester-utils/test_case_harness"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
+)
+
+const (
+	// ServerStartupTimeout is the maximum time to wait for Flask server to start
+	ServerStartupTimeout = 10 * time.Second
+
+	// ConnectTimeout is the timeout for each connection attempt
+	ConnectTimeout = 100 * time.Millisecond
+
+	// CheckInterval is the interval between server readiness checks
+	CheckInterval = 100 * time.Millisecond
 )
 
 func financeTestCase() tester_definition.TestCase {
@@ -78,7 +89,7 @@ func startFlaskServer(workDir string, port int, logger interface {
 	}
 
 	// Wait for server to be ready
-	if err := server.waitForReady(10 * time.Second); err != nil {
+	if err := server.waitForReady(ServerStartupTimeout); err != nil {
 		server.stop()
 		return nil, fmt.Errorf("Flask server failed to start: %v\nstdout: %s\nstderr: %s",
 			err, stdout.String(), stderr.String())
@@ -91,12 +102,12 @@ func startFlaskServer(workDir string, port int, logger interface {
 func (s *flaskServer) waitForReady(timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", s.port), 100*time.Millisecond)
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", s.port), ConnectTimeout)
 		if err == nil {
 			conn.Close()
 			return nil
 		}
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(CheckInterval)
 	}
 	return fmt.Errorf("server did not become ready within %v", timeout)
 }

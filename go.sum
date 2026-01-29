@@ -1,3 +1,5 @@
+github.com/bootcs-cn/tester-utils v1.0.0 h1:4KCcep7sj8xTqvwQxZ9ryTMZydjueH6SWgJVXgdMIBA=
+github.com/bootcs-cn/tester-utils v1.0.0/go.mod h1:mJSneYLMyQ9mV6qEt8ytGCmjJOgVcBalsa+5JwzQVxM=
 github.com/creack/pty v1.1.24 h1:bJrF4RRfyJnbTJqzRLHzcGaZK1NeM5kTC9jGgovnR1s=
 github.com/creack/pty v1.1.24/go.mod h1:08sCNb52WyoAwi2QDyzUCTgcvVFhUzewun7wtTfvcwE=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

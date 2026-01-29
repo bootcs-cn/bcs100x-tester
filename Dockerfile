@@ -1,0 +1,64 @@
+# Multi-stage Dockerfile for bcs100x-tester
+# Stage 1: Build the Go binary
+FROM golang:1.24-bookworm AS builder
+
+WORKDIR /build
+
+# Copy both tester and tester-utils for local build
+COPY . /build/bcs100x-tester
+COPY ../../bootcs-tester-utils /build/bootcs-tester-utils
+
+WORKDIR /build/bcs100x-tester
+
+# Verify go.mod has the correct replace directive
+RUN cat go.mod
+
+# Download dependencies
+RUN go mod download
+
+# Build the binary with CGO enabled (for SQLite)
+RUN CGO_ENABLED=1 GOOS=linux go build -o bcs100x-tester -ldflags="-s -w" .
+
+# Stage 2: Runtime image with all dependencies
+FROM debian:bookworm-slim
+
+# Install runtime dependencies:
+# - clang: C compiler for C problems
+# - python3: Python interpreter for Python problems
+# - python3-pip: pip for Python package management
+# - python3-venv: virtual environment support
+# - sqlite3: SQLite database for SQL problems
+# - valgrind: memory leak detection (optional but recommended)
+# - ca-certificates: for HTTPS connections
+RUN apt-get update && apt-get install -y \
+    clang \
+    python3 \
+    python3-pip \
+    python3-venv \
+    sqlite3 \
+    valgrind \
+    ca-certificates \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create a non-root user for running tests
+RUN useradd -m -s /bin/bash tester
+
+# Copy the binary from builder
+COPY --from=builder /build/bcs100x-tester /usr/local/bin/bcs100x-tester
+
+# Set working directory
+WORKDIR /workspace
+
+# Change ownership to tester user
+RUN chown -R tester:tester /workspace
+
+# Switch to non-root user
+USER tester
+
+# Set environment variables
+ENV PATH="/usr/local/bin:${PATH}"
+
+# Default command shows help
+ENTRYPOINT ["bcs100x-tester"]
+CMD ["--help"]

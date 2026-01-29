@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bootcs-dev/bcs100x-tester/internal/helpers"
-	"github.com/bootcs-dev/tester-utils/random"
-	"github.com/bootcs-dev/tester-utils/runner"
-	"github.com/bootcs-dev/tester-utils/test_case_harness"
-	"github.com/bootcs-dev/tester-utils/tester_definition"
+	"github.com/bootcs-cn/bcs100x-tester/internal/helpers"
+	"github.com/bootcs-cn/tester-utils/random"
+	"github.com/bootcs-cn/tester-utils/runner"
+	"github.com/bootcs-cn/tester-utils/test_case_harness"
+	"github.com/bootcs-cn/tester-utils/tester_definition"
 )
 
 // Scrabble 字母分值表（对齐 CS50）
@@ -20,7 +20,7 @@ func getOnePointLetters() []string {
 	letters := []string{}
 	for i := 0; i < 26; i++ {
 		if POINTS[i] == 1 {
-			letters = append(letters, string('a'+i))
+			letters = append(letters, string(rune('a'+i)))
 		}
 	}
 	return letters
@@ -148,8 +148,8 @@ func testScrabble(harness *test_case_harness.TestCaseHarness) error {
 	indices := random.RandomInts(0, len(POINTS)-1, numTests)
 
 	for _, i := range indices {
-		letter1 := string('a' + i)
-		letter2 := string('a' + i + 1)
+		letter1 := string(rune('a' + i))
+		letter2 := string(rune('a' + i + 1))
 
 		// 计算预期结果
 		var expected string
@@ -193,7 +193,7 @@ func testScrabble(harness *test_case_harness.TestCaseHarness) error {
 	letterIndices := random.RandomInts(0, 26, numScoreTests)
 
 	for _, i := range letterIndices {
-		letter := string('a' + i)
+		letter := string(rune('a' + i))
 		points := POINTS[i]
 
 		// 创建一个由多个1分字母组成的单词，总分等于测试字母的分数
